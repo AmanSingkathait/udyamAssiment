@@ -10,9 +10,19 @@ function App() {
   const [otpCode, setOtpCode] = useState('');
   const [isValidating, setIsValidating] = useState(false);
   const [showErrors, setShowErrors] = useState(false);
+  const [hasInteracted, setHasInteracted] = useState(false);
+
+  // Form validation patterns
+  const aadhaarPattern = /^\d{12}$/;
+  const otpPattern = /^\d{6}$/;
+
+  // Validation functions
+  const validateAadhaar = (value) => aadhaarPattern.test(value);
+  const validateOTP = (value) => otpPattern.test(value);
 
   const handleValidateAndGenerateOTP = () => {
-    if (aadhaarNumber.trim() && entrepreneurName.trim()) {
+    setHasInteracted(true);
+    if (aadhaarNumber.trim() && entrepreneurName.trim() && validateAadhaar(aadhaarNumber)) {
       setIsValidating(true);
       setShowErrors(false);
       // Simulate API call
@@ -25,14 +35,45 @@ function App() {
     }
   };
 
-  const handleValidateOTP = () => {
-    if (otpCode.trim()) {
-      // Handle OTP validation
-      console.log('Validating OTP:', otpCode);
+  // Clear errors when user starts typing
+  const handleAadhaarChange = (e) => {
+    setAadhaarNumber(e.target.value);
+    setHasInteracted(true);
+    if (showErrors) {
+      setShowErrors(false);
     }
   };
 
-  const isFormValid = aadhaarNumber.trim() && entrepreneurName.trim();
+  const handleEntrepreneurNameChange = (e) => {
+    setEntrepreneurName(e.target.value);
+    setHasInteracted(true);
+    if (showErrors) {
+      setShowErrors(false);
+    }
+  };
+
+  const handleOtpChange = (e) => {
+    setOtpCode(e.target.value);
+    setHasInteracted(true);
+    if (showErrors) {
+      setShowErrors(false);
+    }
+  };
+
+  const handleValidateOTP = () => {
+    setHasInteracted(true);
+    if (otpCode.trim() && validateOTP(otpCode)) {
+      // Handle OTP validation
+      console.log('Validating OTP:', otpCode);
+      setTimeout(() => {
+        alert('Aadhaar verification completed successfully!');
+        setShowOtpSection(false);
+        setOtpCode('');
+      }, 1000);
+    } else {
+      setShowErrors(true);
+    }
+  };
 
   return (
     <div className="App">
@@ -40,54 +81,54 @@ function App() {
       <div className="content">
         <div className="form-container">
           <div className="heading">
-            <h1 className="form-title">UDYAM REGISTRATION FORM - For New Enterprise who are not Registered yet as MSME</h1>
+            <h1 className="form-title">Aadhaar Verification With OTP</h1>
           </div>
 
           <div className="aadhaar-section">
-            <div className="aadhaar-banner">
-              <h2>Aadhaar Verification With OTP</h2>
-            </div>
-            
             <div className="form-fields">
               <div className="field-group">
                 <label htmlFor="aadhaar">1. Aadhaar Number / आधार संख्या</label>
-                <input 
-                  type="text" 
-                  id="aadhaar" 
+                <input
+                  type="text"
+                  id="aadhaar"
                   placeholder="Your Aadhaar No"
-                  className="form-input"
+                  className={`form-input ${showErrors && (!aadhaarNumber.trim() || !validateAadhaar(aadhaarNumber)) ? 'error' : ''}`}
                   value={aadhaarNumber}
-                  onChange={(e) => setAadhaarNumber(e.target.value)}
+                  onChange={handleAadhaarChange}
+                  maxLength={12}
                 />
                 {showErrors && !aadhaarNumber.trim() && (
                   <span className="error-text">*Required</span>
                 )}
+                {showErrors && aadhaarNumber.trim() && !validateAadhaar(aadhaarNumber) && (
+                  <span className="error-text">*Please enter a valid 12-digit Aadhaar number</span>
+                )}
               </div>
-              
+
               <div className="field-group">
                 <label htmlFor="entrepreneur">2. Name of Entrepreneur / उद्यमी का नाम</label>
-                <input 
-                  type="text" 
-                  id="entrepreneur" 
+                <input
+                  type="text"
+                  id="entrepreneur"
                   placeholder="Name as per Aadhaar"
-                  className="form-input"
+                  className={`form-input ${showErrors && !entrepreneurName.trim() ? 'error' : ''}`}
                   value={entrepreneurName}
-                  onChange={(e) => setEntrepreneurName(e.target.value)}
+                  onChange={handleEntrepreneurNameChange}
                 />
                 {showErrors && !entrepreneurName.trim() && (
                   <span className="error-text">*Required</span>
                 )}
               </div>
             </div>
-            
+
             <div className="instructions">
-              <h3>Important Information:</h3>
               <ul>
+                <li>Aadhaar number shall be required for Udyam Registration.</li>
                 <li>The Aadhaar number shall be of the proprietor in the case of a proprietorship firm, of the managing partner in the case of a partnership firm and of a karta in the case of a Hindu Undivided Family (HUF).</li>
-                <li>In case of a Company or a Limited Liability Partnership or a Cooperative Society or a Society or a Trust, the organisation or its authorised signatory shall provide its GSTIN(As per applicablity of CGST Act 2017 and as notified by the ministry of MSME vide S.O. 1055(E) dated 05th March 2021) and PAN along with its Aadhaar number.</li>
+                <li>In case of a Company or a Limited Liability Partnership or a Cooperative Society or a Society or a Trust, the organisation or its authorised signatory shall provide its GSTIN(As per applicablity of CGST Act 2017 and as notified by the ministry of MSME <a href="#" className="link">vide S.O. 1055(E) dated 05th March 2021</a>) and PAN along with its Aadhaar number.</li>
               </ul>
             </div>
-            
+
             <div className="consent-section">
               <label className="consent-checkbox">
                 <input type="checkbox" defaultChecked />
@@ -99,11 +140,11 @@ function App() {
                 </span>
               </label>
             </div>
-            
+
             {/* Show either the original button or the OTP section */}
             {!showOtpSection ? (
               <div className="button-section">
-                <button 
+                <button
                   className="validate-button"
                   onClick={handleValidateAndGenerateOTP}
                   disabled={isValidating}
@@ -117,32 +158,38 @@ function App() {
                   <span className="required">*</span>Enter One Time Password(OTP) Code
                 </h3>
                 <div className="otp-input-group">
-                  <input 
-                    type="text" 
-                    placeholder="OTP code"
-                    className="otp-input"
+                  <input
+                    type="text"
+                    placeholder="Enter 6-digit OTP"
+                    className={`otp-input ${showErrors && (!otpCode.trim() || !validateOTP(otpCode)) ? 'error' : ''}`}
                     value={otpCode}
-                    onChange={(e) => setOtpCode(e.target.value)}
+                    onChange={handleOtpChange}
                     maxLength={6}
                   />
                   <p className="otp-message">OTP has been sent to ******0176</p>
+                  {showErrors && !otpCode.trim() && (
+                    <span className="error-text">*OTP is required</span>
+                  )}
+                  {showErrors && otpCode.trim() && !validateOTP(otpCode) && (
+                    <span className="error-text">*Please enter a valid 6-digit OTP</span>
+                  )}
                 </div>
                 <div className="otp-button-section">
-                  <button 
+                  <button
                     className="validate-otp-button"
                     onClick={handleValidateOTP}
                     disabled={!otpCode.trim()}
                   >
-                    Validate
+                    Validate OTP
                   </button>
                 </div>
               </div>
             )}
-            
-            <div className="footer-text">
-              <div className="scrolling-text">
-                Activities (NIC codes) not covered under MSMED Act, 2006 for Udyam Registration
-              </div>
+          </div>
+
+          <div className="footer-text">
+            <div className="scrolling-text">
+              Activities (NIC codes) not covered under MSMED Act, 2006 for Udyam Registration
             </div>
           </div>
         </div>
